@@ -10,6 +10,12 @@
       android:allowBackup="false"
       android:theme="@style/AppTheme"
       android:supportsRtl="true">
+        <meta-data
+            android:name="THING_SMART_APPKEY"
+            android:value="5su8wacrfse9hmpeh73x" />
+        <meta-data
+            android:name="THING_SMART_SECRET"
+            android:value="cexxud45v4cfkamp8f7dwcw8pxnfkmu3" />
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"

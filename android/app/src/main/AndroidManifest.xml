@@ -1,6 +1,8 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
       android:name=".MainApplication"
@@ -9,12 +11,19 @@
       android:roundIcon="@mipmap/ic_launcher_round"
       android:allowBackup="false"
       android:theme="@style/AppTheme"
-      android:supportsRtl="true">
+      android:supportsRtl="true"
+      tools:replace="android:supportsRtl">
         <meta-data
             android:name="THING_SMART_APPKEY"
             android:value="5su8wacrfse9hmpeh73x" />
         <meta-data
             android:name="THING_SMART_SECRET"
+            android:value="cexxud45v4cfkamp8f7dwcw8pxnfkmu3" />
+        <meta-data
+            android:name="TUYA_SMART_APPKEY"
+            android:value="5su8wacrfse9hmpeh73x" />
+        <meta-data
+            android:name="TUYA_SMART_SECRET"
             android:value="cexxud45v4cfkamp8f7dwcw8pxnfkmu3" />
       <activity
         android:name=".MainActivity"

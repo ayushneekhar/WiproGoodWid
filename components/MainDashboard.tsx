@@ -6,7 +6,6 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  SafeAreaView,
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
@@ -21,6 +20,9 @@ interface MainDashboardProps {
   onSwitchHome: (home: HomeBean) => void;
   onEditHome: (home: HomeBean) => void;
   onCreateNewHome: () => void;
+  onGoToDevicePairing?: () => void;
+  onGoToDeviceControl?: () => void;
+  onLogout?: () => void;
 }
 
 const MainDashboard: React.FC<MainDashboardProps> = ({
@@ -31,6 +33,9 @@ const MainDashboard: React.FC<MainDashboardProps> = ({
   onSwitchHome,
   onEditHome,
   onCreateNewHome,
+  onGoToDevicePairing,
+  onGoToDeviceControl,
+  onLogout,
 }) => {
   const [homeDetails, setHomeDetails] = useState<HomeBean>(activeHome);
   const [weather, setWeather] = useState<WeatherBean | null>(null);
@@ -205,6 +210,22 @@ const MainDashboard: React.FC<MainDashboardProps> = ({
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Home Management</Text>
       <View style={styles.actionButtons}>
+        {onGoToDevicePairing && (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.pairingButton]}
+            onPress={onGoToDevicePairing}>
+            <Text style={styles.pairingButtonText}>Add Device</Text>
+          </TouchableOpacity>
+        )}
+
+        {onGoToDeviceControl && (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.controlButton]}
+            onPress={onGoToDeviceControl}>
+            <Text style={styles.controlButtonText}>Device Control</Text>
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity
           style={[styles.actionButton, styles.editButton]}
           onPress={() => onEditHome(homeDetails)}>
@@ -225,22 +246,32 @@ const MainDashboard: React.FC<MainDashboardProps> = ({
           </TouchableOpacity>
         )}
       </View>
+
+      {onLogout && (
+        <View style={styles.accountSection}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.logoutButton]}
+            onPress={onLogout}>
+            <Text style={styles.logoutButtonText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 
   if (isLoading && !isRefreshing) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
           <Text style={styles.loadingText}>Loading home details...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         refreshControl={
@@ -283,7 +314,7 @@ const MainDashboard: React.FC<MainDashboardProps> = ({
           <Text style={styles.debugText}>Role Code: {homeDetails.role}</Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -450,10 +481,40 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  pairingButton: {
+    backgroundColor: '#FF9500',
+  },
+  pairingButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   deleteButton: {
     backgroundColor: '#FF3B30',
   },
   deleteButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  controlButton: {
+    backgroundColor: '#5856D6',
+  },
+  controlButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  accountSection: {
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  logoutButton: {
+    backgroundColor: '#8E8E93',
+  },
+  logoutButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',

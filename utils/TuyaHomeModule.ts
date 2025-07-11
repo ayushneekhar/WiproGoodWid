@@ -7,21 +7,25 @@ import {
   HomeEventNames,
 } from '../types/TuyaTypes';
 
-// Get the native module - it should be registered as "TuyaConnectionModule"
+// Get the native module - it should be registered as "TuyaHomeModule"
 // based on the getName() method in the Kotlin code
-const {TuyaConnectionModule} = NativeModules;
+const {TuyaHomeModule} = NativeModules;
 
-if (!TuyaConnectionModule) {
+if (!TuyaHomeModule) {
   throw new Error(
-    'TuyaConnectionModule not found. Make sure the native module is properly linked.',
+    'TuyaHomeModule not found. Make sure the native module is properly linked.',
   );
 }
 
-class TuyaHomeModule implements TuyaHomeModuleInterface {
+// Global listener management
+let isHomeListenerRegistered = false;
+let listenerRefCount = 0;
+
+class TuyaHomeModuleClass implements TuyaHomeModuleInterface {
   private eventEmitter: NativeEventEmitter;
 
   constructor() {
-    this.eventEmitter = new NativeEventEmitter(TuyaConnectionModule);
+    this.eventEmitter = new NativeEventEmitter(TuyaHomeModule);
   }
 
   /**
@@ -41,7 +45,7 @@ class TuyaHomeModule implements TuyaHomeModuleInterface {
     rooms: string[],
   ): Promise<number> {
     try {
-      const homeId = await TuyaConnectionModule.createHome(
+      const homeId = await TuyaHomeModule.createHome(
         name,
         lon,
         lat,
@@ -61,7 +65,7 @@ class TuyaHomeModule implements TuyaHomeModuleInterface {
    */
   async queryHomeList(): Promise<HomeBean[]> {
     try {
-      const homes = await TuyaConnectionModule.queryHomeList();
+      const homes = await TuyaHomeModule.queryHomeList();
       return homes || [];
     } catch (error) {
       console.error('TuyaHomeModule.queryHomeList error:', error);
@@ -76,7 +80,7 @@ class TuyaHomeModule implements TuyaHomeModuleInterface {
    */
   async getHomeDetail(homeId: number): Promise<HomeBean> {
     try {
-      const homeDetail = await TuyaConnectionModule.getHomeDetail(homeId);
+      const homeDetail = await TuyaHomeModule.getHomeDetail(homeId);
       return homeDetail;
     } catch (error) {
       console.error('TuyaHomeModule.getHomeDetail error:', error);
@@ -91,7 +95,7 @@ class TuyaHomeModule implements TuyaHomeModuleInterface {
    */
   async getHomeLocalCache(homeId: number): Promise<HomeBean> {
     try {
-      const homeDetail = await TuyaConnectionModule.getHomeLocalCache(homeId);
+      const homeDetail = await TuyaHomeModule.getHomeLocalCache(homeId);
       return homeDetail;
     } catch (error) {
       console.error('TuyaHomeModule.getHomeLocalCache error:', error);
@@ -120,7 +124,7 @@ class TuyaHomeModule implements TuyaHomeModuleInterface {
     overwriteRooms: boolean,
   ): Promise<void> {
     try {
-      await TuyaConnectionModule.updateHome(
+      await TuyaHomeModule.updateHome(
         homeId,
         name,
         lon,
@@ -142,7 +146,7 @@ class TuyaHomeModule implements TuyaHomeModuleInterface {
    */
   async dismissHome(homeId: number): Promise<void> {
     try {
-      await TuyaConnectionModule.dismissHome(homeId);
+      await TuyaHomeModule.dismissHome(homeId);
     } catch (error) {
       console.error('TuyaHomeModule.dismissHome error:', error);
       throw error;
@@ -162,7 +166,7 @@ class TuyaHomeModule implements TuyaHomeModuleInterface {
     lat: number,
   ): Promise<WeatherBean | null> {
     try {
-      const weather = await TuyaConnectionModule.getHomeWeatherSketch(
+      const weather = await TuyaHomeModule.getHomeWeatherSketch(
         homeId,
         lon,
         lat,
@@ -185,7 +189,7 @@ class TuyaHomeModule implements TuyaHomeModuleInterface {
     sortList: DeviceAndGroupSortItem[],
   ): Promise<void> {
     try {
-      await TuyaConnectionModule.sortDevInHome(homeId, sortList);
+      await TuyaHomeModule.sortDevInHome(homeId, sortList);
     } catch (error) {
       console.error('TuyaHomeModule.sortDevInHome error:', error);
       throw error;
@@ -199,9 +203,24 @@ class TuyaHomeModule implements TuyaHomeModuleInterface {
    */
   async registerHomeChangeListener(): Promise<boolean> {
     try {
-      const result = await TuyaConnectionModule.registerHomeChangeListener();
-      return result;
+      // Increment reference count
+      listenerRefCount++;
+
+      // Only register if not already registered
+      if (!isHomeListenerRegistered) {
+        const result = await TuyaHomeModule.registerHomeChangeListener();
+        isHomeListenerRegistered = true;
+        console.log('Global home change listener registered successfully');
+        return result;
+      } else {
+        console.log(
+          'Home change listener already registered globally, reusing existing listener',
+        );
+        return true;
+      }
     } catch (error) {
+      // Decrement ref count if registration failed
+      listenerRefCount = Math.max(0, listenerRefCount - 1);
       console.error('TuyaHomeModule.registerHomeChangeListener error:', error);
       throw error;
     }
@@ -213,8 +232,21 @@ class TuyaHomeModule implements TuyaHomeModuleInterface {
    */
   async unregisterHomeChangeListener(): Promise<boolean> {
     try {
-      const result = await TuyaConnectionModule.unregisterHomeChangeListener();
-      return result;
+      // Decrement reference count
+      listenerRefCount = Math.max(0, listenerRefCount - 1);
+
+      // Only unregister if no more references and currently registered
+      if (listenerRefCount === 0 && isHomeListenerRegistered) {
+        const result = await TuyaHomeModule.unregisterHomeChangeListener();
+        isHomeListenerRegistered = false;
+        console.log('Global home change listener unregistered');
+        return result;
+      } else {
+        console.log(
+          `Home change listener still in use (${listenerRefCount} references remaining)`,
+        );
+        return true;
+      }
     } catch (error) {
       console.error(
         'TuyaHomeModule.unregisterHomeChangeListener error:',
@@ -225,11 +257,25 @@ class TuyaHomeModule implements TuyaHomeModuleInterface {
   }
 
   /**
+   * Get current listener status
+   */
+  isListenerRegistered(): boolean {
+    return isHomeListenerRegistered;
+  }
+
+  /**
+   * Get current reference count
+   */
+  getListenerRefCount(): number {
+    return listenerRefCount;
+  }
+
+  /**
    * Required for new NativeEventEmitter syntax - adds a listener for the specified event
    * @param eventName The name of the event to listen for
    */
   addListener(eventName: string): void {
-    TuyaConnectionModule.addListener(eventName);
+    TuyaHomeModule.addListener(eventName);
   }
 
   /**
@@ -237,7 +283,7 @@ class TuyaHomeModule implements TuyaHomeModuleInterface {
    * @param count The number of listeners to remove
    */
   removeListeners(count: number): void {
-    TuyaConnectionModule.removeListeners(count);
+    TuyaHomeModule.removeListeners(count);
   }
 
   /**
@@ -254,7 +300,7 @@ class TuyaHomeModule implements TuyaHomeModuleInterface {
   }
 
   /**
-   * Get the event emitter instance for advanced usage
+   * Get the event emitter instance
    * @returns The NativeEventEmitter instance
    */
   getEventEmitter(): NativeEventEmitter {
@@ -262,6 +308,6 @@ class TuyaHomeModule implements TuyaHomeModuleInterface {
   }
 }
 
-// Export singleton instance
-const tuyaHomeModule = new TuyaHomeModule();
-export default tuyaHomeModule;
+// Export a singleton instance
+const TuyaHomeModuleInstance = new TuyaHomeModuleClass();
+export default TuyaHomeModuleInstance;

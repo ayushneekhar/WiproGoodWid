@@ -9,7 +9,10 @@ class TuyaPackage: ReactPackage {
     override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
         return listOf(
             TuyaModule(reactContext),
-            TuyaHomeUtilities(reactContext))
+            TuyaHomeUtilities(reactContext),
+            TuyaPairingUtilities(reactContext),
+            TuyaDeviceControlUtilities(reactContext)
+        )
     }
 
     override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<in Nothing, in Nothing>> {

@@ -29,6 +29,19 @@ export interface WeatherBean {
   inIconUrl: string;
 }
 
+export interface DeviceBean {
+  devId: string;
+  name: string;
+  mac: string;
+  isOnline: boolean;
+  accessType: number;
+  dpName: string;
+  communicationId: string;
+  connectionStatus: number;
+  iconUrl: string;
+  productId: string;
+}
+
 export interface HomeBean {
   lat: number;
   lon: number;
@@ -39,6 +52,7 @@ export interface HomeBean {
   homeStatus: number;
   role: number;
   rooms: Room[];
+  devices: DeviceBean[];
 }
 
 export interface DeviceAndGroupSortItem {
@@ -123,6 +137,151 @@ export type HomeEventNames =
   | 'onServerConnectSuccess';
 
 export type LoginMethod = 'phone' | 'email' | 'emailCode' | 'register';
+
+// Pairing Types
+export interface ScannedDevice {
+  id: string;
+  name: string;
+  mac: string;
+  rssi: number;
+  address: string;
+  uuid: string;
+  deviceType: number;
+  productId: string;
+  configType: string; // 'config_type_single' or 'config_type_wifi'
+  isBind: boolean;
+  flag: number;
+}
+
+export interface DeviceInfo {
+  name: string;
+  icon: string;
+  productId: string;
+}
+
+export interface PairedDevice {
+  devId: string;
+  name: string;
+  iconUrl: string;
+  productId: string;
+  uuid: string;
+  isOnline: boolean;
+}
+
+export interface BlePairingParams {
+  homeId: number;
+  uuid: string;
+  deviceType: number;
+  productId?: string;
+  address?: string;
+  isShare?: boolean;
+  timeout?: number;
+}
+
+export interface ComboPairingParams {
+  homeId: number;
+  uuid: string;
+  deviceType: number;
+  token: string;
+  ssid: string;
+  password: string;
+  mac?: string;
+  address?: string;
+  timeout?: number;
+}
+
+export interface WiFiEzPairingParams {
+  homeId: number;
+  ssid: string;
+  password: string;
+  token: string;
+  timeout?: number;
+}
+
+export type PairingMode = 'ble' | 'combo' | 'wifi-ez';
+
+export type WiFiEzPairingStep =
+  | 'getting_token'
+  | 'broadcasting_ssid'
+  | 'device_connecting'
+  | 'device_binding'
+  | 'success';
+
+export interface TuyaPairingModuleInterface {
+  startLeScan(timeout: number): Promise<void>;
+  getDeviceInfo(
+    productId: string,
+    uuid: string,
+    mac: string,
+  ): Promise<DeviceInfo>;
+  manuallyStopScanning(): Promise<void>;
+  startBleDevicePairing(params: BlePairingParams): Promise<PairedDevice>;
+  stopBleDevicePairing(uuid: string): Promise<boolean>;
+  startComboDevicePairing(params: ComboPairingParams): Promise<PairedDevice>;
+  stopComboDevicePairing(uuid: string): Promise<boolean>;
+  getCurrentWiFiSSID(): Promise<string | null>;
+  getEzPairingToken(homeId: number): Promise<string>;
+  startEzPairing(params: WiFiEzPairingParams): Promise<PairedDevice>;
+  stopEzPairing(): Promise<boolean>;
+}
+
+export type PairingEventNames = 'onLeScan' | 'onEzPairingStep';
+
+// Navigation Types
+export type RootStackParamList = {
+  Login: undefined;
+  Dashboard: undefined;
+  DeviceControl: undefined;
+  DeviceDetailControl: {
+    device: DeviceBean;
+    homeId: number;
+    homeName: string;
+  };
+  DevicePairing: {
+    homeId: number;
+    homeName: string;
+  };
+  CreateHome: undefined;
+  EditHome: {
+    home: HomeBean;
+  };
+};
+
+// Auth Types
+export interface AuthState {
+  isLoggedIn: boolean;
+  user: User | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export interface LoginFormState {
+  method: LoginMethod;
+  phoneNumber: string;
+  email: string;
+  password: string;
+  verificationCode: string;
+  codeSent: boolean;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export type LoginFormAction =
+  | {type: 'SET_METHOD'; payload: LoginMethod}
+  | {type: 'SET_FIELD'; payload: {field: keyof LoginFormState; value: string}}
+  | {type: 'SET_CODE_SENT'; payload: boolean}
+  | {type: 'SET_LOADING'; payload: boolean}
+  | {type: 'SET_ERROR'; payload: string | null}
+  | {type: 'RESET_FORM'};
+
+// Device Types
+export interface DeviceControlState {
+  deviceStatuses: DeviceStatus[];
+  listenedDevices: Set<string>;
+  recentDevices: string[];
+  isLoading: boolean;
+  error: string | null;
+}
 
 // App State Types
 export interface AppState {

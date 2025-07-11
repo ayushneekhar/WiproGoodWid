@@ -6,7 +6,6 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.ReadableArray
-import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableArray
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.modules.core.DeviceEventManagerModule
@@ -19,7 +18,6 @@ import com.thingclips.smart.home.sdk.bean.DeviceAndGroupInHomeBean
 import com.thingclips.smart.home.sdk.callback.IThingGetHomeListCallback
 import com.thingclips.smart.home.sdk.callback.IThingHomeResultCallback
 import com.thingclips.smart.home.sdk.callback.IIGetHomeWetherSketchCallBack
-import com.thingclips.smart.home.sdk.callback.IGetHomeWetherCallBack
 import com.thingclips.smart.interior.enums.BizParentTypeEnum
 import com.thingclips.smart.sdk.api.IResultCallback
 import com.thingclips.smart.sdk.bean.DeviceBean
@@ -30,7 +28,7 @@ class TuyaHomeUtilities(private val reactContext: ReactApplicationContext): Reac
     private var homeChangeListener: IThingHomeChangeListener? = null
     private val homeStatusListeners = mutableMapOf<Long, IThingHomeStatusListener>()
 
-    override fun getName() = "TuyaConnectionModule"
+    override fun getName() = "TuyaHomeModule"
 
     /**
      * Creates a new home.
@@ -343,6 +341,35 @@ class TuyaHomeUtilities(private val reactContext: ReactApplicationContext): Reac
                 roomsArray.pushMap(roomMap)
             }
             putArray("rooms", roomsArray)
+
+            val devicesArray: WritableArray = Arguments.createArray()
+            bean.deviceList?.forEach { device ->
+                val deviceMap: WritableMap = Arguments.createMap().apply {
+                    putString("devId", device.devId)
+                    putString("name", device.name ?: "Unknown Device")
+                    putString("mac", device.mac)
+                    putBoolean("isOnline", device.isOnline)
+                    putInt("accessType", device.accessType)
+                    putString("dpName", device.dpName.toString())
+                    putString("communicationId", device.communicationId)
+                    putInt("connectionStatus", device.connectionStatus)
+                    putString("iconUrl", device.iconUrl)
+                    putString("productId", device.productId ?: "")
+
+                    val dpsArray: WritableArray = Arguments.createArray()
+
+                    device.dps.forEach { dp ->
+                        val dpsMap: WritableMap = Arguments.createMap().apply {
+                            putString(dp.key, dp.value.toString())
+                        }
+                        dpsArray.pushMap(dpsMap)
+                    }
+
+                    putArray("dpsArray", dpsArray)
+                }
+                devicesArray.pushMap(deviceMap)
+            }
+            putArray("devices", devicesArray)
             
             // Note: Converting deviceList, groupList, etc. would require
             // additional helper functions for DeviceBean, GroupBean, etc.

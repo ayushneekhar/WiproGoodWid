@@ -56,6 +56,11 @@ export class StorageService {
     }
   }
 
+  static setLoginMethod(method: string): void {
+    // Alias for saveLoginMethod for better semantic naming
+    this.saveLoginMethod(method);
+  }
+
   static getLoginMethod(): string | null {
     try {
       return storage.getString(STORAGE_KEYS.LOGIN_METHOD) || null;
@@ -92,6 +97,14 @@ export class StorageService {
     }
   }
 
+  static setLoggedIn(isLoggedIn: boolean): void {
+    try {
+      storage.set(STORAGE_KEYS.IS_LOGGED_IN, isLoggedIn);
+    } catch (error) {
+      console.error('Failed to set login status:', error);
+    }
+  }
+
   static logout(): void {
     try {
       // Clear user-related data
@@ -103,6 +116,11 @@ export class StorageService {
     } catch (error) {
       console.error('Failed to clear user data:', error);
     }
+  }
+
+  static clearUserData(): void {
+    // Alias for logout() method for better semantic naming
+    this.logout();
   }
 
   // App Settings Methods
